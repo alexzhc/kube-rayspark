@@ -25,7 +25,7 @@ llm = AzureOpenAI(deployment_name=os.environ["AZURE_OPENAPI_DEPLOYMENT_NAME"], m
 chat = AzureChatOpenAI(
     openai_api_base=os.environ["OPENAI_API_BASE"],
     openai_api_version=os.environ["OPENAI_API_VERSION"],
-    deployment_name=os.environ["AZURE_OPENAPI_DEPLOYMENT_NAME"],
+    deployment_name=os.environ["OPENAI_AZURE_DEPLOYMENT_NAME"],
     openai_api_key=os.environ["OPENAI_API_KEY"],
     openai_api_type=os.environ["OPENAI_API_TYPE"],
 )
