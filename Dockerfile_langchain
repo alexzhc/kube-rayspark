@@ -1,0 +1,5 @@
+FROM rayspark:base
+
+RUN $HOME/anaconda3/bin/pip install --no-cache-dir --user langchain==0.0.266
+
+RUN $HOME/anaconda3/bin/pip install --no-cache-dir --user langchain[llms]==0.0.266

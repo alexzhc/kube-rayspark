@@ -1,0 +1,36 @@
+docker rm -f langchain
+docker run -d \
+--name langchain \
+--hostname langchain \
+--restart=unless-stopped \
+--shm-size=5.11gb \
+-e RAY_memory_monitor_refresh_ms=0 \
+-v /var/lib/docker/volumes/langchain/_data/.dockerenv:/.dockerenv \
+-v /var/lib/docker/volumes/langchain/_data/NGC-DL-CONTAINER-LICENSE:/NGC-DL-CONTAINER-LICENSE \
+-v /var/lib/docker/volumes/langchain/_data/bin:/bin \
+-v /var/lib/docker/volumes/langchain/_data/boot:/boot \
+-v /var/lib/docker/volumes/langchain/_data/etc:/etc \
+-v /var/lib/docker/volumes/langchain/_data/home:/home \
+-v /var/lib/docker/volumes/langchain/_data/lib:/lib \
+-v /var/lib/docker/volumes/langchain/_data/lib32:/lib32 \
+-v /var/lib/docker/volumes/langchain/_data/lib64:/lib64 \
+-v /var/lib/docker/volumes/langchain/_data/libx32:/libx32 \
+-v /var/lib/docker/volumes/langchain/_data/media:/media \
+-v /var/lib/docker/volumes/langchain/_data/mnt:/mnt \
+-v /var/lib/docker/volumes/langchain/_data/opt:/opt \
+-v /var/lib/docker/volumes/langchain/_data/root:/root \
+-v /var/lib/docker/volumes/langchain/_data/sbin:/sbin \
+-v /var/lib/docker/volumes/langchain/_data/srv:/srv \
+-v /var/lib/docker/volumes/langchain/_data/usr:/usr \
+-v /var/lib/docker/volumes/langchain/_data/var:/var \
+-v /var/run/docker.sock:/var/run/docker.sock \
+-v /usr/local/tmp:/tmp \
+-v /Users/alexz/myscripts:/usr/local/bin/myscripts \
+-v /Users/alexz/.bash_aliases:/home/ray/.bash_aliases \
+-v /Users/alexz/.complete_aliases:/home/ray/.complete_aliases \
+-v /Users/alexz/.kube://home/ray/.kube \
+-v /Users/alexz/Documents/Github:/Users/alexz/Documents/Github \
+-v /usr/local/etc/bash_completion.d:/etc/bash_completion.d \
+--mount type=tmpfs,destination=/run \
+--entrypoint tail \
+rayspark:langchain -f /dev/null

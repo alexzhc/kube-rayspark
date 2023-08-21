@@ -1,0 +1,7 @@
+FROM rayproject/ray-ml:2.6.3
+
+RUN sudo apt-get update -y \
+    && sudo apt-get install -y openjdk-8-jdk \
+    && sudo apt-get clean
+
+ENV RAY_memory_monitor_refresh_ms 0
