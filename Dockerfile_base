@@ -1,10 +1,14 @@
-FROM rayproject/ray:2.6.3-py311-gpu
+FROM rayproject/ray:2.6.3-py310-gpu
 
 RUN sudo apt update -y \
     && sudo apt install -y openjdk-8-jdk \
     && sudo apt clean
 
 ENV RAY_memory_monitor_refresh_ms 0
+
+# Set pip mirror
+ARG PIP_MIRROR
+RUN [ -z ${PIP_MIRROR} ] || $HOME/anaconda3/bin/pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # ray container is NOT Rootless, so must 'pip --user'
 RUN $HOME/anaconda3/bin/pip install --no-cache-dir --user pyspark==3.3.2

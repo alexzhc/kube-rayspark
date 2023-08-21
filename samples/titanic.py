@@ -22,7 +22,7 @@ spark = raydp.init_spark(app_name='RaySpark Titanic',
                          executor_memory='4GB')
 
 # read csv into spark
-csv_file_path = "titanic.csv"
+csv_file_path = "samples/titanic.csv"
 df = spark.read.csv(csv_file_path, header=True, inferSchema=True)
 df.show()
 
@@ -30,7 +30,7 @@ df.show()
 llm = AzureChatOpenAI(
     openai_api_base=os.environ["OPENAI_API_BASE"],
     openai_api_version=os.environ["OPENAI_API_VERSION"],
-    deployment_name=os.environ["AZURE_OPENAPI_DEPLOYMENT_NAME"],
+    deployment_name=os.environ["OPENAI_AZURE_DEPLOYMENT_NAME"],
     openai_api_key=os.environ["OPENAI_API_KEY"],
     openai_api_type=os.environ["OPENAI_API_TYPE"],
 )
@@ -40,4 +40,3 @@ agent = create_spark_dataframe_agent(llm, df=df, verbose=True)
 # agent.run("how many rows are there?")
 
 agent.run("Who bought the most expensive ticket?")
-

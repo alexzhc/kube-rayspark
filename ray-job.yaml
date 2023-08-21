@@ -35,8 +35,11 @@ spec:
         spec:
           containers:
             - name: ray-head
-              image: registry.k8s.local:5000/daocloud/rayspark:base
+              image: registry.k8s.local:5000/daocloud/rayspark:langchain
               imagePullPolicy: IfNotPresent
+              envFrom:
+                - secretRef:
+                    name: openai-conf
               ports:
                 - containerPort: 6379
                   name: gcs-server
@@ -80,8 +83,11 @@ spec:
           spec:
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
-                image: registry.k8s.local:5000/daocloud/rayspark:base
+                image: registry.k8s.local:5000/daocloud/rayspark:langchain
                 imagePullPolicy: IfNotPresent
+                envFrom:
+                  - secretRef:
+                      name: openai-conf
                 lifecycle:
                   preStop:
                     exec:
@@ -91,6 +97,13 @@ spec:
                 #     cpu: "1"
                 #   requests:
                 #     cpu: "200m"
+                volumeMounts:
+                - mountPath: /home/ray/samples
+                  name: code-sample
+            volumes:
+              - name: code-sample
+                configMap:
+                  name: ray-job-code-sample
   # SubmitterPodTemplate is the template for the pod that will run the `ray job submit` command against the RayCluster.
   # If SubmitterPodTemplate is specified, the first container is assumed to be the submitter container.
   # submitterPodTemplate:
