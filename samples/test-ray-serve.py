@@ -3,6 +3,7 @@
 import os
 from ray import serve
 from starlette.requests import Request
+import requests
 
 from langchain.chat_models import ChatOpenAI, ChatAnthropic, AzureChatOpenAI
 from langchain import PromptTemplate, LLMChain
@@ -42,8 +43,6 @@ deployment = DeployLLM.bind()
 PORT_NUMBER = 8282
 # Run the deployment
 serve.api.run(deployment, port=PORT_NUMBER)
-
-import requests
 
 text = "What NFL team won the Super Bowl in the year Justin Beiber was born?"
 response = requests.post(f"http://localhost:{PORT_NUMBER}/?text={text}")

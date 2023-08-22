@@ -22,7 +22,7 @@ spec:
   # suspend: false
   # rayClusterSpec specifies the RayCluster instance to be created by the RayJob controller.
   rayClusterSpec:
-    rayVersion: '2.5.0' # should match the Ray version in the image of the containers
+    rayVersion: '2.6.3' # should match the Ray version in the image of the containers
     # Ray head pod template
     headGroupSpec:
       # The `rayStartParams` are used to configure the `ray start` command.
@@ -33,6 +33,7 @@ spec:
       #pod template
       template:
         spec:
+          terminationGracePeriodSeconds: 0
           containers:
             - name: ray-head
               image: registry.k8s.local:5000/daocloud/rayspark:langchain
@@ -81,6 +82,7 @@ spec:
         #pod template
         template:
           spec:
+            terminationGracePeriodSeconds: 0
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
                 image: registry.k8s.local:5000/daocloud/rayspark:langchain
@@ -106,12 +108,14 @@ spec:
                   name: ray-job-code-sample
   # SubmitterPodTemplate is the template for the pod that will run the `ray job submit` command against the RayCluster.
   # If SubmitterPodTemplate is specified, the first container is assumed to be the submitter container.
-  # submitterPodTemplate:
-  #   spec:
-  #     restartPolicy: Never
-  #     containers:
-  #       - name: my-custom-rayjob-submitter-pod
-  #         image: registry.k8s.local:5000/daocloud/rayspark-ml:latest
+  submitterPodTemplate:
+    spec:
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: my-custom-rayjob-submitter-pod
+          image: registry.k8s.local:5000/daocloud/rayspark:langchain
+          imagePullPolicy: IfNotPresent
   #         # If Command is not specified, the correct command will be supplied at runtime using the RayJob spec `entrypoint` field.
   #         # Specifying Command is not recommended.
   #         # command: ["ray job submit --address=http://rayjob-sample-raycluster-v6qcq-head-svc.default.svc.cluster.local:8265 -- echo hello world"]

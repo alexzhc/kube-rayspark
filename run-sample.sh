@@ -1,21 +1,26 @@
 #!/bin/bash -x
 cd ./samples || exit 1
 
-job_file=$1
+export job_file=$1
 [ -z ${job_file} ] && exit 1
 [ -f ${job_file} ] || exit 1
+yq -v || exit 1
+export job_name="rj"-"$( echo ${job_file} | sed 's/\..*$//;s/_/-/g')"
 
-cp -vf ${job_file} sample_code.py
-kubectl delete cm ray-job-code-sample
-kubectl create cm ray-job-code-sample --from-file=./
-rm -vf sample_code.py
-cd ../
+kubectl delete cm ${job_name}
+kubectl create cm ${job_name} --from-file=./
+cd ../ || exit 1
 
-kubectl delete -f ray-job.yaml
-kubectl apply -f ray-job.yaml
+kubectl delete rayjob ${job_name}
+cat ray-job.yaml \
+    | yq '.metadata.name = env(job_name)' \
+    | yq '.spec.entrypoint = "python /home/ray/samples/" + env(job_file)' \
+    | yq '.spec.rayClusterSpec.headGroupSpec.template.spec.volumes[0].configMap.name = env(job_name) ' \
+    | yq '.spec.rayClusterSpec.workerGroupSpecs[0].template.spec.volumes[0].configMap.name = env(job_name) ' \
+    | kubectl apply -f -
 
-until kubectl get job/rayjob-sample; do
+until kubectl get job/${job_name}; do
     sleep 1
 done
-kubectl wait job/rayjob-sample --for=jsonpath='{.status.ready}'=1 --timeout=90s
-kubectl logs -f job/rayjob-sample
+kubectl wait job/${job_name} --for=jsonpath='{.status.ready}'=1 --timeout=90s
+kubectl logs -f job/${job_name}

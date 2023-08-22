@@ -82,16 +82,18 @@ spec:
       #pod template
       template:
         spec:
+          terminationGracePeriodSeconds: 0
           containers:
             - name: ray-head
-              image: rayproject/ray:2.5.0
-              resources:
-                limits:
-                  cpu: 2
-                  memory: 2Gi
-                requests:
-                  cpu: 2
-                  memory: 2Gi
+              image: registry.k8s.local:5000/rayproject/ray:2.5.0
+              imagePullPolicy: IfNotPresent
+              resources: {}
+                # limits:
+                #   cpu: 2
+                #   memory: 2Gi
+                # requests:
+                #   cpu: 2
+                #   memory: 2Gi
               ports:
                 - containerPort: 6379
                   name: gcs-server
@@ -115,17 +117,19 @@ spec:
         #pod template
         template:
           spec:
+            terminationGracePeriodSeconds: 0
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
-                image: rayproject/ray:2.5.0
+                image: registry.k8s.local:5000/rayproject/ray:2.5.0
+                imagePullPolicy: IfNotPresent
                 lifecycle:
                   preStop:
                     exec:
                       command: ["/bin/sh","-c","ray stop"]
-                resources:
-                  limits:
-                    cpu: "1"
-                    memory: "2Gi"
-                  requests:
-                    cpu: "500m"
-                    memory: "2Gi"
+                resources: {}
+                  # limits:
+                  #   cpu: "1"
+                  #   memory: "2Gi"
+                  # requests:
+                  #   cpu: "500m"
+                  #   memory: "2Gi"
