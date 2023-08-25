@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 import openai
 
 from langchain.llms import AzureOpenAI
@@ -16,9 +17,7 @@ from langchain.schema import HumanMessage, SystemMessage
 # os.environ["OPENAI_API_KEY"] = ""
 # DEPLOYMENT_NAME = "openai-01"
 
-llm = AzureOpenAI(deployment_name=os.environ["AZURE_OPENAPI_DEPLOYMENT_NAME"], model_name="gpt-35-turbo-16k",
-                  temperature=0) 
-
+# llm = AzureOpenAI(deployment_name=os.environ["OPENAI_AZURE_DEPLOYMENT_NAME"], model_name="gpt-35-turbo-16k", temperature=0) 
 # llm("Tell me a joke")
 
 # # here: Azure OpenAI information is set up bash envs
@@ -30,7 +29,7 @@ chat = AzureChatOpenAI(
     openai_api_type=os.environ["OPENAI_API_TYPE"],
 )
 
-text = "Tell me a joke"
+text = "What is DaoCloud DCE?"
 
 result = chat([HumanMessage(content=text)])
 
