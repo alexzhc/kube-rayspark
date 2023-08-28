@@ -1,7 +1,11 @@
-FROM rayproject/ray-ml:2.6.3
+FROM rayproject/ray-ml:2.6.3-py310-gpu
 
-RUN sudo apt-get update -y \
-    && sudo apt-get install -y openjdk-8-jdk \
-    && sudo apt-get clean
+RUN sudo apt update -y \
+    && sudo apt install -y openjdk-8-jdk \
+    && sudo apt clean
 
 ENV RAY_memory_monitor_refresh_ms 0
+
+# Set pip mirror
+ARG PIP_MIRROR
+RUN [ -z ${PIP_MIRROR} ] || $HOME/anaconda3/bin/pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple

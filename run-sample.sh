@@ -5,7 +5,7 @@ export job_file=$1
 [ -z ${job_file} ] && exit 1
 [ -f ${job_file} ] || exit 1
 yq -v || exit 1
-export job_name="rj"-"$( echo ${job_file} | sed 's/\..*$//;s/_/-/g')"
+export job_name="rayjob"-"$( echo ${job_file} | sed 's/\..*$//;s/_/-/g')"
 
 kubectl delete cm ${job_name}
 kubectl create cm ${job_name} --from-file=./

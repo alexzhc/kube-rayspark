@@ -13,13 +13,13 @@ OPENAI_API_KEY ?= ""
 OPENAI_AZURE_DEPLOYMENT_NAME ?= ""
 
 build:
-	for i in base langchain; do \
+	for i in base langchain ml; do \
 		docker build . --build-arg PIP_MIRROR=$(PIP_MIRROR) \
 			-f Dockerfile_$$i -t rayspark:$$i; \
 	done
 
 push:
-	for i in base langchain; do \
+	for i in base langchain ml; do \
 		docker tag rayspark:$$i $(REGISTRY)/daocloud/rayspark:$$i; \
 		docker push $$_ || docker push $$_ ;\
 	done
@@ -49,11 +49,14 @@ kuberay:
 		./kuberay/kuberay-apiserver \
 		-n $(NAMESPACE) --create-namespace
 
-word_count:
+word_count xgboost_ray_nyctaxi titanic iris scale:
 	./run-sample.sh $@.py
 
-xgboost_ray_nyctaxi:
-	./run-sample.sh $@.py
+clean:
+	kubectl delete rayjobs.ray.io --all
 
-titanic:
-	./run-sample.sh $@.py
+scale-cluster:
+	kubectl exec $$(kubectl get pods -l ray.io/identifier=raycluster-autoscaler-head -o name) \
+		-it -c ray-head \
+		-- python -c \
+		"import ray;ray.init();ray.autoscaler.sdk.request_resources(num_cpus=4)"

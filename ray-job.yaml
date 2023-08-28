@@ -1,11 +1,13 @@
 apiVersion: ray.io/v1alpha1
 kind: RayJob
 metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
   name: rayjob-sample
 spec:
   entrypoint: python /home/ray/samples/sample_code.py
   # ShutdownAfterJobFinishes specifies whether the RayCluster should be deleted after the RayJob finishes. Default is false.
-  shutdownAfterJobFinishes: true
+  shutdownAfterJobFinishes: false
   # runtimeEnv decoded to '{
   #    "pip": [
   #        "requests==2.26.0",
@@ -23,6 +25,41 @@ spec:
   # rayClusterSpec specifies the RayCluster instance to be created by the RayJob controller.
   rayClusterSpec:
     rayVersion: '2.6.3' # should match the Ray version in the image of the containers
+    # If enableInTreeAutoscaling is true, the autoscaler sidecar will be added to the Ray head pod.
+    # Ray autoscaler integration is supported only for Ray versions >= 1.11.0
+    # Ray autoscaler integration is Beta with KubeRay >= 0.3.0 and Ray >= 2.0.0.
+    enableInTreeAutoscaling: true
+    # autoscalerOptions is an OPTIONAL field specifying configuration overrides for the Ray autoscaler.
+    # The example configuration shown below below represents the DEFAULT values.
+    # (You may delete autoscalerOptions if the defaults are suitable.)
+    autoscalerOptions:
+      # upscalingMode is "Default" or "Aggressive."
+      # Conservative: Upscaling is rate-limited; the number of pending worker pods is at most the size of the Ray cluster.
+      # Default: Upscaling is not rate-limited.
+      # Aggressive: An alias for Default; upscaling is not rate-limited.
+      upscalingMode: Default
+      # idleTimeoutSeconds is the number of seconds to wait before scaling down a worker pod which is not using Ray resources.
+      idleTimeoutSeconds: 60
+      # image optionally overrides the autoscaler's container image.
+      # If instance.spec.rayVersion is at least "2.0.0", the autoscaler will default to the same image as
+      # the ray container. For older Ray versions, the autoscaler will default to using the Ray 2.0.0 image.
+      ## image: "my-repo/my-custom-autoscaler-image:tag"
+      # imagePullPolicy optionally overrides the autoscaler container's default image pull policy (IfNotPresent).
+      imagePullPolicy: IfNotPresent
+      # Optionally specify the autoscaler container's securityContext.
+      securityContext: {}
+      env: []
+      envFrom: []
+      # resources specifies optional resource request and limit overrides for the autoscaler container.
+      # The default autoscaler resource limits and requests should be sufficient for production use-cases.
+      # However, for large Ray clusters, we recommend monitoring container resource usage to determine if overriding the defaults is required.
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+        requests:
+          cpu: "500m"
+          memory: "512Mi"
     # Ray head pod template
     headGroupSpec:
       # The `rayStartParams` are used to configure the `ray start` command.
@@ -33,7 +70,7 @@ spec:
       #pod template
       template:
         spec:
-          terminationGracePeriodSeconds: 0
+          terminationGracePeriodSeconds: 3
           containers:
             - name: ray-head
               image: registry.k8s.local:5000/daocloud/rayspark:langchain
@@ -50,11 +87,26 @@ spec:
                   name: client
                 - containerPort: 8000
                   name: serve
-              # resources:
-              #   limits:
-              #     cpu: "1"
-              #   requests:
-              #     cpu: "200m"
+              # The resource requests and limits in this config are too small for production!
+              # For an example with more realistic resource configuration, see
+              # ray-cluster.autoscaler.large.yaml.
+              # It is better to use a few large Ray pod than many small ones.
+              # For production, it is ideal to size each Ray pod to take up the
+              # entire Kubernetes node on which it is scheduled.
+              resources:
+                limits:
+                  cpu: "1"
+                  memory: "2G"
+                requests:
+                  # For production use-cases, we recommend specifying integer CPU reqests and limits.
+                  # We also recommend setting requests equal to limits for both CPU and memory.
+                  # For this example, we use a 500m CPU request to accomodate resource-constrained local
+                  # Kubernetes testing environments such as KinD and minikube.
+                  cpu: "500m"
+                  # The rest state memory usage of the Ray head node is around 1Gb. We do not
+                  # recommend allocating less than 2Gb memory for the Ray head pod.
+                  # For production use-cases, we recommend allocating at least 8Gb memory for each Ray container.
+                  memory: "2G"
               volumeMounts:
                 - mountPath: /home/ray/samples
                   name: code-sample
@@ -72,9 +124,9 @@ spec:
       # the pod replicas in this group typed worker
       - replicas: 1
         minReplicas: 1
-        maxReplicas: 5
+        maxReplicas: 10
         # logical group name, for this called small-group, also can be functional
-        groupName: small-group
+        groupName: small
         # The `rayStartParams` are used to configure the `ray start` command.
         # See https://github.com/ray-project/kuberay/blob/master/docs/guidance/rayStartParams.md for the default settings of `rayStartParams` in KubeRay.
         # See https://docs.ray.io/en/latest/cluster/cli.html#ray-start for all available options in `rayStartParams`.
@@ -82,7 +134,7 @@ spec:
         #pod template
         template:
           spec:
-            terminationGracePeriodSeconds: 0
+            terminationGracePeriodSeconds: 3
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
                 image: registry.k8s.local:5000/daocloud/rayspark:langchain
@@ -94,11 +146,23 @@ spec:
                   preStop:
                     exec:
                       command: [ "/bin/sh","-c","ray stop" ]
-                # resources:
-                #   limits:
-                #     cpu: "1"
-                #   requests:
-                #     cpu: "200m"
+                # The resource requests and limits in this config are too small for production!
+                # For an example with more realistic resource configuration, see
+                # ray-cluster.autoscaler.large.yaml.
+                # It is better to use a few large Ray pod than many small ones.
+                # For production, it is ideal to size each Ray pod to take up the
+                # entire Kubernetes node on which it is scheduled.
+                resources:
+                  limits:
+                    cpu: "1"
+                    memory: "2G"
+                  # For production use-cases, we recommend specifying integer CPU reqests and limits.
+                  # We also recommend setting requests equal to limits for both CPU and memory.
+                  # For this example, we use a 500m CPU request to accomodate resource-constrained local
+                  # Kubernetes testing environments such as KinD and minikube.
+                  requests:
+                    cpu: "500m"
+                    memory: "2G"
                 volumeMounts:
                 - mountPath: /home/ray/samples
                   name: code-sample
@@ -119,8 +183,6 @@ spec:
   #         # If Command is not specified, the correct command will be supplied at runtime using the RayJob spec `entrypoint` field.
   #         # Specifying Command is not recommended.
   #         # command: ["ray job submit --address=http://rayjob-sample-raycluster-v6qcq-head-svc.default.svc.cluster.local:8265 -- echo hello world"]
-      
-
 ######################Ray code sample#################################
 # this sample is from https://docs.ray.io/en/latest/cluster/job-submission.html#quick-start-example
 # it is mounted into the container and executed to show the Ray job at work
