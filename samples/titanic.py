@@ -7,8 +7,6 @@ from langchain.agents import create_spark_dataframe_agent
 import ray
 import raydp
 
-from ray.air import session
-
 # Native spark
 # from pyspark.sql import SparkSession
 # spark = SparkSession.builder.getOrCreate()
@@ -21,13 +19,17 @@ ray.init()
 spark = raydp.init_spark(app_name='RaySpark Titanic',
                          num_executors=1,
                          executor_cores=1,
-                         executor_memory='1GB'
-                        )
+                         executor_memory='1GB',
+                         configs = {
+                            'spark.ray.raydp_spark_master.actor.resource.CPU': 0,
+                            'spark.ray.raydp_spark_master.actor.resource.spark_master': 1,  # Force Spark driver related actor run on headnode
+                         })
 
 # read csv into spark
 csv_file_path = "hdfs://hadoop-hadoop-hdfs-nn.ray.svc.cluster.local:9000/samples/titanic.csv"
 df = spark.read.csv(csv_file_path, header=True, inferSchema=True)
 df.show()
+
 ds = ray.data.from_spark(df)
 ds.show()
 

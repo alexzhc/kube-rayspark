@@ -5,3 +5,4 @@ __pycache__
 *.tar.gz
 .percon
 .openai.conf
+tmp/

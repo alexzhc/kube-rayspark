@@ -67,6 +67,8 @@ spec:
       # See https://docs.ray.io/en/latest/cluster/cli.html#ray-start for all available options in `rayStartParams`.
       rayStartParams:
         dashboard-host: '0.0.0.0'
+        num-cpus: "0" # No task on head node. https://docs.ray.io/en/latest/cluster/vms/user-guides/large-cluster-best-practices.html#vms-large-cluster-configure-head-node
+        resources: '"{\"spark_master\": 100}"' # RayDPMaster affinity
       #pod template
       template:
         spec:
@@ -131,6 +133,7 @@ spec:
         # See https://github.com/ray-project/kuberay/blob/master/docs/guidance/rayStartParams.md for the default settings of `rayStartParams` in KubeRay.
         # See https://docs.ray.io/en/latest/cluster/cli.html#ray-start for all available options in `rayStartParams`.
         rayStartParams: {}
+          # resources: '"{\"spark_executor\": 100}"' # RayDP executor affinity
         #pod template
         template:
           spec:

@@ -60,7 +60,7 @@ upload:
 	kubectl exec -it $(HADOOP_NN) -- hadoop fs -put /tmp/samples hdfs://$(HADOOP_API):9000/
 	kubectl exec -it $(HADOOP_NN) -- hadoop fs -ls hdfs://$(HADOOP_API):9000/samples
 
-word_count xgboost_ray_nyctaxi titanic iris scale:
+word_count xgboost_ray_nyctaxi titanic iris scale time:
 	./run-sample.sh $@.py
 
 clean:
@@ -71,3 +71,9 @@ scale-cluster:
 		-it -c ray-head \
 		-- python -c \
 		"import ray;ray.init();ray.autoscaler.sdk.request_resources(num_cpus=4)"
+
+watch-procs:
+	while sleep 1; do \
+		./get-procs.sh; \
+		[[ $$(kubectl get rayjob -o json | jq -r .items[0].status.jobStatus) == "SUCCEEDED" ]] && break; \
+	done
