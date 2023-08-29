@@ -25,7 +25,7 @@ spark = raydp.init_spark(app_name='RaySpark Titanic',
                         )
 
 # read csv into spark
-csv_file_path = "samples/titanic.csv"
+csv_file_path = "hdfs://hadoop-hadoop-hdfs-nn.ray.svc.cluster.local:9000/samples/titanic.csv"
 df = spark.read.csv(csv_file_path, header=True, inferSchema=True)
 df.show()
 ds = ray.data.from_spark(df)

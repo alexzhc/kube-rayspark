@@ -6,6 +6,9 @@ PIP_MIRROR ?=  https://pypi.tuna.tsinghua.edu.cn/simple
 
 NAMESPACE ?= ray
 
+HADOOP_NN ?= hadoop-hadoop-hdfs-nn-0
+HADOOP_API ?= hadoop-hadoop-hdfs-nn.$(NAMESPACE).svc.cluster.local
+
 OPENAI_API_TYPE ?= ""
 OPENAI_API_VERSION ?= ""
 OPENAI_API_BASE ?= ""
@@ -48,6 +51,14 @@ kuberay:
 	helm upgrade --install kuberay-apiserver \
 		./kuberay/kuberay-apiserver \
 		-n $(NAMESPACE) --create-namespace
+
+upload:
+	kubectl exec -it $(HADOOP_NN) -- rm -vfr /tmp/samples
+	kubectl cp samples $(HADOOP_NN):/tmp/
+	kubectl exec -it $(HADOOP_NN) -- ls /tmp/samples
+	kubectl exec -it $(HADOOP_NN) -- hadoop fs -rm -r -f hdfs://$(HADOOP_API):9000/samples
+	kubectl exec -it $(HADOOP_NN) -- hadoop fs -put /tmp/samples hdfs://$(HADOOP_API):9000/
+	kubectl exec -it $(HADOOP_NN) -- hadoop fs -ls hdfs://$(HADOOP_API):9000/samples
 
 word_count xgboost_ray_nyctaxi titanic iris scale:
 	./run-sample.sh $@.py
