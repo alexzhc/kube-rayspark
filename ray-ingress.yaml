@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ray-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ray.k8s.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rayjob-titanic-raycluster-xxx-head-svc # Your head pod service
+                port:
+                  number: 8265
