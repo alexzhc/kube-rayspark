@@ -1,7 +1,7 @@
 
 SHELL := /bin/bash
 
-REGISTRY ?= 127.0.0.1:5000
+REGISTRY ?= registry.k8s.local:5000
 PIP_MIRROR ?=  https://pypi.tuna.tsinghua.edu.cn/simple
 
 NAMESPACE ?= ray
@@ -52,6 +52,24 @@ kuberay:
 		./kuberay/kuberay-apiserver \
 		-n $(NAMESPACE) --create-namespace
 
+.PHONY: spark
+spark-operator:
+	helm install spark-operator \
+	./spark/charts/spark-operator-chart \
+	-n $(NAMESPACE) --create-namespace \
+	--set sparkJobNamespace=$(NAMESPACE) \
+	--set serviceAccounts.sparkoperator.name=spark-operator \
+	--set serviceAccounts.spark.name=spark \
+	--set image.repository=$(REGISTRY)/googlecloudplatform/spark-operator \
+	--set image.tag=v1beta2-1.3.8-3.1.1
+
+spark-pi:
+	cat ./spark/examples/spark-py-pi.yaml | \
+		yq '.metadata.namespace = "$(NAMESPACE)"' | \
+		yq '.spec.image = "$(REGISTRY)/spark-operator/spark-py:v3.1.1"' | \
+		yq '.spec.imagePullPolicy = "IfNotPresent"' | \
+		kubectl apply -f -
+
 upload:
 	kubectl exec -it $(HADOOP_NN) -- rm -vfr /tmp/samples
 	kubectl cp samples $(HADOOP_NN):/tmp/
@@ -65,6 +83,7 @@ word_count xgboost_ray_nyctaxi titanic iris scale time:
 
 clean:
 	kubectl delete rayjobs.ray.io --all
+	kubectl delete sparkapplications.sparkoperator.k8s.io --all
 
 scale-cluster:
 	kubectl exec $$(kubectl get pods -l ray.io/identifier=raycluster-autoscaler-head -o name) \
