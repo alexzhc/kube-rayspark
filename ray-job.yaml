@@ -80,6 +80,11 @@ spec:
               envFrom:
                 - secretRef:
                     name: openai-conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
               ports:
                 - containerPort: 6379
                   name: gcs-server
@@ -112,6 +117,9 @@ spec:
               volumeMounts:
                 - mountPath: /home/ray/samples
                   name: code-sample
+                - mountPath: /tmp/ray
+                  name: log
+                  subPathExpr: ray/$(POD_NAME) # Save log to the host
           volumes:
             # You set volumes at the Pod level, then mount them into containers inside that Pod
             - name: code-sample
@@ -122,6 +130,10 @@ spec:
                 # items:
                 #   - key: sample_code.py
                 #     path: sample_code.py
+            - name: log
+              hostPath:
+                path: /tmp
+                type: DirectoryOrCreate
     workerGroupSpecs:
       # the pod replicas in this group typed worker
       - replicas: 1
@@ -145,6 +157,11 @@ spec:
                 envFrom:
                   - secretRef:
                       name: openai-conf
+                env:
+                  - name: POD_NAME
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.name
                 lifecycle:
                   preStop:
                     exec:
@@ -167,12 +184,19 @@ spec:
                     cpu: "500m"
                     memory: "2G"
                 volumeMounts:
-                - mountPath: /home/ray/samples
-                  name: code-sample
+                  - mountPath: /home/ray/samples
+                    name: code-sample
+                  - mountPath: /tmp/ray
+                    name: log
+                    subPathExpr: ray/$(POD_NAME) # Save log to the host
             volumes:
               - name: code-sample
                 configMap:
                   name: ray-job-code-sample
+              - name: log
+                hostPath:
+                  path: /tmp
+                  type: DirectoryOrCreate  
   # SubmitterPodTemplate is the template for the pod that will run the `ray job submit` command against the RayCluster.
   # If SubmitterPodTemplate is specified, the first container is assumed to be the submitter container.
   submitterPodTemplate:
