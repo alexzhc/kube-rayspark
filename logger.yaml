@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: logger
+spec:
+  selector:
+    matchLabels:
+      k8s-app: logger
+  template:
+    metadata:
+      labels:
+        k8s-app: logger
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: logger
+        image: registry.k8s.local:5000/daocloud/rsync
+        imagePullPolicy: IfNotPresent
+        command:
+        - tail
+        - -f
+        - /dev/null
+        resources: {}
+          # limits:
+          #   memory: 200Mi
+          # requests:
+          #   cpu: 100m
+          #   memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+          readOnly: true
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: tmp
+        hostPath:
+          path: /tmp
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/worker
+                operator: Exists
+

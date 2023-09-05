@@ -96,3 +96,16 @@ watch-procs:
 		./get-procs.sh; \
 		[[ $$(kubectl get rayjob -o json | jq -r .items[0].status.jobStatus) == "SUCCEEDED" ]] && break; \
 	done
+
+logger:
+	kubectl apply -f logger.yaml -n $(NAMESPACE)
+
+logs:
+	kubectl get pods -n $(NAMESPACE) -l k8s-app=logger --no-headers -o custom-columns=":metadata.name" | \
+		xargs -tI % rsync -az --no-specials --no-devices --info=progress2 \
+		--blocking-io --rsh ./kubectl-rsh.sh %.logger@$(NAMESPACE):/tmp/ray/ /tmp/ray/ \
+		--exclude '*.so' \
+		--exclude '*/runtime_resources' \
+		|| true
+	ls -1 /tmp/ray/
+
