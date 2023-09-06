@@ -54,22 +54,20 @@ kuberay:
 
 .PHONY: spark
 spark-operator:
-	helm install spark-operator \
+	helm upgrade --install spark-operator \
 	./spark/charts/spark-operator-chart \
 	-n $(NAMESPACE) --create-namespace \
 	--set sparkJobNamespace=$(NAMESPACE) \
+	--set webhook.enable=true \
+	--set webhook.port=443 \
 	--set serviceAccounts.sparkoperator.name=spark-operator \
 	--set serviceAccounts.spark.name=spark \
 	--set image.repository=$(REGISTRY)/googlecloudplatform/spark-operator \
 	--set image.tag=v1beta2-1.3.8-3.1.1
 
 spark-pi:
-	cat ./spark/examples/spark-py-pi.yaml | \
-		yq '.metadata.namespace = "$(NAMESPACE)"' | \
-		yq '.spec.image = "$(REGISTRY)/spark-operator/spark-py:v3.1.1"' | \
-		yq '.spec.imagePullPolicy = "IfNotPresent"' | \
-		kubectl apply -f -
-
+	kubectl apply -f ./spark-py-pi.yaml -n $(NAMESPACE)
+		
 upload:
 	kubectl exec -it $(HADOOP_NN) -- rm -vfr /tmp/samples
 	kubectl cp samples $(HADOOP_NN):/tmp/
@@ -103,9 +101,9 @@ logger:
 logs:
 	kubectl get pods -n $(NAMESPACE) -l k8s-app=logger --no-headers -o custom-columns=":metadata.name" | \
 		xargs -tI % rsync -az --no-specials --no-devices --info=progress2 \
-		--blocking-io --rsh ./kubectl-rsh.sh %.logger@$(NAMESPACE):/tmp/ray/ /tmp/ray/ \
+		--blocking-io --rsh ./kubectl-rsh.sh %.logger@$(NAMESPACE):/tmp/log/ /tmp/log/ \
 		--exclude '*.so' \
 		--exclude '*/runtime_resources' \
 		|| true
-	ls -1 /tmp/ray/
+	ls -1 /tmp/log/ray
 

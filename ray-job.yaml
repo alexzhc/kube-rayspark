@@ -118,8 +118,8 @@ spec:
                 - mountPath: /home/ray/samples
                   name: code-sample
                 - mountPath: /tmp/ray
-                  name: log
-                  subPathExpr: ray/$(POD_NAME) # Save log to the host
+                  name: tmp
+                  subPathExpr: log/ray/$(POD_NAME) # Save log to the host
           volumes:
             # You set volumes at the Pod level, then mount them into containers inside that Pod
             - name: code-sample
@@ -130,7 +130,7 @@ spec:
                 # items:
                 #   - key: sample_code.py
                 #     path: sample_code.py
-            - name: log
+            - name: tmp
               hostPath:
                 path: /tmp
                 type: DirectoryOrCreate
@@ -187,13 +187,13 @@ spec:
                   - mountPath: /home/ray/samples
                     name: code-sample
                   - mountPath: /tmp/ray
-                    name: log
-                    subPathExpr: ray/$(POD_NAME) # Save log to the host
+                    name: tmp
+                    subPathExpr: log/ray/$(POD_NAME) # Save log to the host
             volumes:
               - name: code-sample
                 configMap:
                   name: ray-job-code-sample
-              - name: log
+              - name: tmp
                 hostPath:
                   path: /tmp
                   type: DirectoryOrCreate  
